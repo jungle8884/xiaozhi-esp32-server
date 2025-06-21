@@ -360,9 +360,12 @@ LLM:
     # 开通地址：https://console.volcengine.com/ark/region:ark+cn-beijing/openManagement?LLM=%7B%7D&OpenTokenDrawer=false
     # 免费额度500000token
     # 开通后，进入这里获取密钥：https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey?apikey=%7B%7D
-    base_url: https://ark.cn-beijing.volces.com/api/v3
-    model_name: doubao-1-5-pro-32k-250115
-    api_key: 你的doubao web key
+    # base_url: https://ark.cn-beijing.volces.com/api/v3
+    # model_name: doubao-1-5-pro-32k-250115
+    # api_key: 你的doubao web key
+    base_url: https://ark.cn-beijing.volces.com/api/v3/chat/completions
+    model_name: doubao-seed-1-6-250615
+    api_key: 29127798-b2df-4e52-830b-6327662807ca
   DeepSeekLLM:
     # 定义LLM API类型
     type: openai
