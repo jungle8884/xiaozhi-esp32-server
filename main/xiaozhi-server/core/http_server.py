@@ -27,7 +27,8 @@ class SimpleHttpServer:
         server_config = self.config["server"]
         websocket_config = server_config.get("websocket")
 
-        if websocket_config and "你" not in websocket_config:
+        # [2026-10-13] 空值必须走自动探测，避免下发空 URL；判定串与 ota_handler 统一为"你的"
+        if websocket_config and "你的" not in websocket_config:
             return websocket_config
         else:
             return f"ws://{local_ip}:{port}/xiaozhi/v1/"

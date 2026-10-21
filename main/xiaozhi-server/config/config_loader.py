@@ -60,6 +60,9 @@ def get_config_from_api(config):
         "secret": config["manager-api"].get("secret", ""),
     }
     # server的配置以本地为准
+    # [2026-10-13] 修复：原实现只透传 5 个 key，漏掉 websocket / timezone_offset。
+    # 后果：切到智控台后 config["server"] 里没有 websocket 键 -> OTA 下发空 URL
+    #       -> 设备日志 "WS: Connecting to websocket server: " + Invalid URI format。
     if config.get("server"):
         config_data["server"] = {
             "ip": config["server"].get("ip", ""),
@@ -67,6 +70,8 @@ def get_config_from_api(config):
             "http_port": config["server"].get("http_port", ""),
             "vision_explain": config["server"].get("vision_explain", ""),
             "auth_key": config["server"].get("auth_key", ""),
+            "websocket": config["server"].get("websocket", ""),
+            "timezone_offset": config["server"].get("timezone_offset", 8),
         }
     return config_data
 

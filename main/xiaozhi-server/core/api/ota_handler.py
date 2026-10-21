@@ -24,7 +24,10 @@ class OTAHandler(BaseHandler):
         server_config = self.config["server"]
         websocket_config = server_config.get("websocket", "")
 
-        if "你的" not in websocket_config:
+        # [2026-10-13] 空值必须走自动探测：智控台模式(config_from_api)下 server 段由
+        # config_loader 重建，websocket 可能缺失。若此时直接 return ""，
+        # 设备会拿到空 URL 并报 "WS: Connecting to websocket server: " + Invalid URI format。
+        if websocket_config and "你的" not in websocket_config:
             return websocket_config
         else:
             return f"ws://{local_ip}:{port}/xiaozhi/v1/"
@@ -67,6 +70,11 @@ class OTAHandler(BaseHandler):
                 content_type="application/json",
             )
         except Exception as e:
+            # [2026-10-13] 原实现吞掉异常且不记日志，排障时只能看到 "request error."，无线索。
+            # 典型触发：body 缺 application 键（KeyError）、body 非法 JSON（JSONDecodeError）、缺 Device-Id。
+            self.logger.bind(tag=TAG).error(
+                f"OTA处理异常: {type(e).__name__}: {e}"
+            )
             return_json = {"success": False, "message": "request error."}
             response = web.Response(
                 text=json.dumps(return_json, separators=(",", ":")),

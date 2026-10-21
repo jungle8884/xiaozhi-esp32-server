@@ -4,6 +4,46 @@ import edge_tts
 from datetime import datetime
 from core.providers.tts.base import TTSProviderBase
 
+# =============================================================================
+# [兼容补丁 2026-10-13] 微软 Edge Read Aloud 由 v1 迁移到 v2，旧端点 403
+# -----------------------------------------------------------------------------
+# 现象：
+#   Edge TTS请求失败: 403, message='Invalid response status',
+#   url=wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?...
+#   设备端表现为「能听懂、会思考、但不出声」。
+#
+# 根因（已实测确认，不是网络被墙、也不是系统时钟不准）：
+#   · 音色列表接口仍返回 200，说明 TrustedClientToken 有效；
+#   · 直连与走代理（FlClash 7890，可正常访问 Google/HuggingFace）均返回 403；
+#   · 微软自 2026-10 起分区域灰度，把 Edge 朗读服务从
+#       wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1
+#     迁移到
+#       wss://api.msedgeservices.com/tts/cognitiveservices/websocket/v1
+#     已升级到 v2 的后端节点会用 403 直接拒绝旧的 v1 握手。
+#
+# 上游进展：rany2/edge-tts issue #490 / PR #491。补丁尚未随 PyPI 版本发布，
+#           故此处就地打补丁。上游发版修好后，本段可整段删除（下方有自动判断，
+#           一旦端点不再指向旧域名就不动手）。
+# =============================================================================
+_LEGACY_WSS_HOST = "speech.platform.bing.com"
+_V2_WSS_URL = (
+    "wss://api.msedgeservices.com/tts/cognitiveservices/websocket/v1"
+    "?Ocp-Apim-Subscription-Key=" + edge_tts.constants.TRUSTED_CLIENT_TOKEN
+)
+
+
+def _apply_edge_tts_v2_patch():
+    """把 edge_tts 的合成端点切到 v2。仅在它仍指向旧 v1 端点时才替换。"""
+    try:
+        import edge_tts.communicate as _communicate
+    except Exception:
+        return
+    if _LEGACY_WSS_HOST in getattr(_communicate, "WSS_URL", ""):
+        _communicate.WSS_URL = _V2_WSS_URL
+
+
+_apply_edge_tts_v2_patch()
+
 
 class TTSProvider(TTSProviderBase):
     def __init__(self, config, delete_audio_file):
