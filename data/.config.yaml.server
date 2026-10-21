@@ -1,0 +1,28 @@
+# ============ 智控台全模块部署配置（服务器/容器版） ============
+# 此文件覆盖 config.yaml 的对应项。写入 manager-api 段后，
+# 配置来源整体切换为数据库（智控台 > 本地文件），VAD/ASR/TTS/LLM/selected_module 以智控台数据库为准。
+
+server:
+  # 容器内监听 0.0.0.0（映射到宿主机 8000）
+  ip: 0.0.0.0
+  port: 8000
+  http_port: 8003
+  # websocket / vision_explain：设备通过公网访问服务器，填服务器公网IP
+  websocket: "ws://43.138.221.123:8000/xiaozhi/v1/"
+  vision_explain: "http://43.138.221.123:8003/mcp/vision/explain"
+
+# 认证默认关闭，如需开启请按 config.yaml 注释填写 token
+
+LLM:
+  ChatGLMLLM:
+    # 智谱免费模型 glm-4-flash 的 api_key（本地文件兜底；智控台模式下以数据库配置优先）
+    api_key: "30638bed90a946e59ce841d18a8f589a.ozws28QBWRiqwW4I"
+
+# ============ 智控台对接 ============
+# 容器内访问智控台：用 docker 服务名 xiaozhi-esp32-server-web，端口 8002（不能写 127.0.0.1）
+manager-api:
+  url: http://xiaozhi-esp32-server-web:8002/xiaozhi
+  # secret：智控台首次启动写入 MySQL sys_params.server.secret 的值。
+  # 因本服务器是全新 MySQL，此值会由智控台随机生成，需登录智控台数据库核对后同步填写，
+  # 否则服务端读取智控台配置会鉴权失败。
+  secret: "请同步智控台数据库sys_params中server.secret的值"
